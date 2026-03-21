@@ -122,6 +122,29 @@ Features:
 - Model switcher per brain group (updates ConfigMap + restarts deployment)
 - Auto-refresh every 30s
 
+## Routing & Retry Logic
+
+Strategy: `simple-shuffle` — each request picks a key at random (not round-robin).
+
+**On failure (429 / 5xx):**
+
+| Setting | Value | Meaning |
+|---------|-------|---------|
+| `allowed_fails` | 1 | 1 failure puts a key into cooldown |
+| `cooldown_time` | 60s | Cooled-down keys are skipped for 60s |
+| `num_retries` | 6 | Same request retries up to 6 times with different keys |
+| `retry_after` | 5s | Wait 5s between retries |
+
+**Fallback chain** (triggered after all retries exhausted):
+```
+simple-brain → simple-brain-fallback
+smart-brain  → simple-brain
+```
+
+**Concurrency note:** Free-tier quota is per Google Cloud project, not per key.
+Multiple keys from the same project share the same RPM/RPD limit.
+True parallel capacity only increases if keys come from different projects.
+
 ## Updating ConfigMap
 
 ```bash
