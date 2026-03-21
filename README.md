@@ -9,9 +9,9 @@ OpenClaw (k8s pod)
     │
     ▼
 LiteLLM Proxy  :4000  (k8s Deployment, namespace: litellm)
-    │  simple-brain  → gemini-2.5-flash  × 6 keys  (simple-shuffle, rpm 10)
-    │  simple-brain-fallback → gemini-3-flash-preview × 6 keys
-    │  smart-brain   → gemini-2.5-pro    × 1 key   (rpm 5)
+    │  simple-brain  → gemini-2.5-flash  (simple-shuffle, rpm 10)
+    │  simple-brain-fallback → gemini-3-flash-preview (auto-fallback)
+    │  smart-brain   → gemini-2.5-pro    (rpm 5)
     │
     ▼
 Gemini API (Google AI Studio free tier)
