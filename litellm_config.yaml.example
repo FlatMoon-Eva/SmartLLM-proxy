@@ -1,0 +1,47 @@
+model_list:
+  # simple-brain: 6 keys, simple-shuffle, rpm_limit 10
+  - model_name: simple-brain
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: YOUR_GEMINI_API_KEY_1
+      rpm_limit: 10
+      thinking_budget: 0
+
+  - model_name: simple-brain
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: YOUR_GEMINI_API_KEY_2
+      rpm_limit: 10
+      thinking_budget: 0
+
+  # simple-brain-fallback: same keys, fallback model
+  - model_name: simple-brain-fallback
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      api_key: YOUR_GEMINI_API_KEY_1
+      rpm_limit: 10
+      thinking_budget: 0
+
+  # smart-brain: 1 key, rpm_limit 5
+  - model_name: smart-brain
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: YOUR_GEMINI_API_KEY_SMART
+      rpm_limit: 5
+
+router_settings:
+  routing_strategy: simple-shuffle
+  fallbacks:
+    - simple-brain: [simple-brain-fallback]
+    - smart-brain: [simple-brain]
+  num_retries: 6
+  retry_after: 5
+  cooldown_time: 60
+  allowed_fails: 1
+
+litellm_settings:
+  drop_params: true
+  callbacks: logger.proxy_handler_instance
+  json_logs: true
+  max_budget: 10.0
+  budget_duration: monthly

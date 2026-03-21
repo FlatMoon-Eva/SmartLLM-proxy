@@ -1,0 +1,58 @@
+# litellm-config ConfigMap is managed separately via:
+#   kubectl create configmap litellm-config -n litellm \
+#     --from-file=config.yaml=litellm_config.yaml \
+#     --dry-run=client -o yaml | kubectl apply -f -
+#
+# litellm-logger ConfigMap — update COLLECTOR_URL to your host IP before applying
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-logger
+  namespace: litellm
+data:
+  logger.py: |
+    from litellm.integrations.custom_logger import CustomLogger
+    from datetime import datetime, timezone
+    import json, os
+
+    COLLECTOR_URL = os.environ.get("COLLECTOR_URL", "http://YOUR_HOST_IP:8889/log")
+
+    def _brain(model_name):
+        if "flash" in model_name: return "simple-brain"
+        if "pro" in model_name:   return "smart-brain"
+        return model_name
+
+    class RequestLogger(CustomLogger):
+        async def _post(self, record):
+            try:
+                import aiohttp
+                async with aiohttp.ClientSession() as s:
+                    await s.post(COLLECTOR_URL, data=json.dumps(record).encode(),
+                                 headers={"Content-Type": "application/json"},
+                                 timeout=aiohttp.ClientTimeout(total=3))
+            except Exception:
+                pass
+
+        async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+            model_name = kwargs.get("model", "")
+            api_key = kwargs.get("api_key") or kwargs.get("litellm_params", {}).get("api_key", "")
+            await self._post({
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "type": "success",
+                "model": _brain(model_name),
+                "key_id": str(api_key)[-7:] if api_key else "unknown",
+            })
+
+        async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
+            model_name = kwargs.get("model", "")
+            fallback_model = kwargs.get("metadata", {}).get("fallback_model", "")
+            if not fallback_model:
+                return  # 只記有 fallback 的失敗
+            await self._post({
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "type": "fallback",
+                "model": _brain(model_name),
+                "fallback_to": _brain(fallback_model),
+            })
+
+    proxy_handler_instance = RequestLogger()

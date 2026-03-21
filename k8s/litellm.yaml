@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+      - name: litellm
+        image: ghcr.io/berriai/litellm:main-latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config
+        - /app/config.yaml
+        - --port
+        - "4000"
+        - --detailed_debug
+        env:
+        - name: LITELLM_CUSTOM_LOGGER
+          value: /app/logger.py
+        - name: PYTHONPATH
+          value: /app
+        # Set COLLECTOR_URL to your host IP, e.g. http://192.168.1.100:8889/log
+        - name: COLLECTOR_URL
+          value: "http://YOUR_HOST_IP:8889/log"
+        ports:
+        - containerPort: 4000
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        - name: logs
+          mountPath: /logs
+        - name: logger
+          mountPath: /app/logger.py
+          subPath: logger.py
+      volumes:
+      - name: config
+        configMap:
+          name: litellm-config
+      - name: logs
+        persistentVolumeClaim:
+          claimName: litellm-logs-pvc
+      - name: logger
+        configMap:
+          name: litellm-logger
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  selector:
+    app: litellm
+  ports:
+  - port: 4000
+    targetPort: 4000

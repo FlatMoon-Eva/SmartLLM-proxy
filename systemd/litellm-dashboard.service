@@ -1,0 +1,12 @@
+[Unit]
+Description=LiteLLM Dashboard
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/litellm-dashboard/env
+ExecStart=/usr/bin/python3 /home/ubuntu/litellm-proxy/dashboard.py
+Restart=always
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target

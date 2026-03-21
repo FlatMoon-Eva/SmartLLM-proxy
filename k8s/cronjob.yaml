@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: litellm-log-cleanup
+  namespace: litellm
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup
+            image: postgres:16-alpine
+            env:
+            - name: PGPASSWORD
+              value: litellm
+            command:
+            - psql
+            - -h
+            - postgres
+            - -U
+            - litellm
+            - -d
+            - litellm
+            - -c
+            - DELETE FROM "LiteLLM_SpendLogs" WHERE "startTime" < NOW() - INTERVAL '1 day';

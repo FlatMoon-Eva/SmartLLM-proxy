@@ -1,0 +1,14 @@
+# runtime data
+requests.jsonl
+collector_state.json
+
+# real config with keys (use litellm_config.yaml.example instead)
+litellm_config.yaml
+.env
+
+# chart.js local copy (download separately)
+chart.min.js
+
+# python
+__pycache__/
+*.pyc
