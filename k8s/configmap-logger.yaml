@@ -15,7 +15,7 @@ data:
     from datetime import datetime, timezone
     import json, os
 
-    COLLECTOR_URL = os.environ.get("COLLECTOR_URL", "http://YOUR_HOST_IP:8889/log")
+    COLLECTOR_URL = os.environ.get("COLLECTOR_URL", "http://tineye.tineye.svc.cluster.local:8889/log")
 
     def _brain(model_name):
         if "flash" in model_name: return "simple-brain"
