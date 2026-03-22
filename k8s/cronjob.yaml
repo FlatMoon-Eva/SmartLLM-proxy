@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: litellm-log-cleanup
-  namespace: litellm
+  namespace: smartllm
 spec:
   schedule: "0 0 * * *"
   jobTemplate:
@@ -15,7 +15,10 @@ spec:
             image: postgres:16-alpine
             env:
             - name: PGPASSWORD
-              value: litellm
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
             command:
             - psql
             - -h
